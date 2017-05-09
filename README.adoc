@@ -1,0 +1,142 @@
+= CafDI - A simple CDI extension for Apache Kafka
+
+Making it easy to use Apache Kafka's Java client API in a CDI managed environemnt
+
+== Getting started
+
+This section gives an overview on how to use the CafDI libray!
+
+=== Maven config
+
+In a Maven managed project simply the following to your `pom.xml`:
+
+[source,xml]
+----
+...
+  <dependency>
+    <groupId>net.wessendorf.kafka</groupId>
+    <artifactId>cafdi</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </dependency>
+...
+----
+
+=== Injecting a Kafka Producer
+
+The `@Producer` annotation is used to configure and inject an instance of the `SimpleKafkaProducer` class, which is a simple extension of the original `KafkaProducer` class:
+
+[source,java]
+----
+...
+public class MyPublisherService {
+
+  private Logger logger = LoggerFactory.getLogger(MyPublisherService.class);
+
+  @Producer(topic = "myTopic")
+  SimpleKafkaProducer<Integer, String> producer;
+
+  /**
+   * A simple service method, that sends payload over the wire
+   */
+  public void hello() {
+    producer.send("My Message");
+  }
+}
+----
+
+=== Annotating a bean method to declare it as a Kafka Consumer
+
+The `@Consumer` annotation is used to configure and declare an annotated method as a _callback_ for the internal `DelegationKafkaConsumer`, which internally uses the vanilla `KafkaConsumer`:
+
+[source,java]
+----
+public class MyListenerService {
+
+  private Logger logger = LoggerFactory.getLogger(MyListenerService.class);
+  
+  /**
+   * Simple listener that receives messages from the Kafka broker
+    */
+  @Consumer(topic = "myTopic", groupId = "myGroupID", keyType = Integer.class)
+  public void receiver(String message) {
+    logger.info("That's what I got: " + message);
+  }
+]
+----
+
+=== Global Configuration of the Kafka cluster
+
+A minimal of configuration is currently needed. For that there is a `@KafkaConfig` annotation. The first occurrence is used:
+
+[source,java]
+----
+@KafkaConfig(bootstrapServers = "172.17.0.3:9092")
+public class MyService {
+   ...
+}
+----
+
+=== JsonObject Serialization
+
+Apache Kafka uses a binary message format, and comes with a handful of handy Serializers and Deserializers, available through the `Serdes` class. The CafDI extenstion adds a Serde for the `JsonObject`:
+
+==== JsonObject Serializer
+
+To send serialize a JsonObject, simply specify the type, like:
+
+[source,java]
+----
+...
+@Producer(topic = "myTopic")
+SimpleKafkaProducer<Integer, JsonObject> producer;
+...
+
+producer.send(myJsonObj);
+----
+
+==== JsonObject Deserializer
+
+For deserialization the argument on the annotation `@Consumer` method is used to setup the actual `Deserializer`
+
+[source,java]
+----
+@Consumer(topic = "myTopic", groupId = "myGroupID", keyType = Integer.class)
+public void receiveJsonObject(JsonObject message) {
+  logger.info("That's what I got: " + message);
+}
+----
+
+== Running Apache Kafka 
+
+To setup Apache Kafka there are different ways to get started. This section quickly discusses pure Docker and Openshift.
+
+=== Running via Docker images
+
+Starting a Zookeeper cluster:
+
+[source,bash]
+----
+docker run -d --name zookeeper jplock/zookeeper:3.4.6
+----
+
+Next, we need to start Kafka and link the Zookeeper Linux container to it:
+
+[source,bash]
+----
+docker run -d --name kafka --link zookeeper:zookeeper ches/kafka
+----
+
+Now, that the broker is running, we need to figure out the IP address of it:
+
+[source,bash]
+----
+docker inspect --format '{{ .NetworkSettings.IPAddress }}' kafka  
+----
+
+We use this IP address when inside our `@KafkaConfig` annotation that our _Producers_ and _Consumers_ can speak to Apache Kafka.
+
+=== Running on Openshift 
+
+For Apache Kafka on Openshift please check this repository 
+
+https://github.com/EnMasseProject/barnabas
