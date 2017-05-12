@@ -176,7 +176,7 @@ public class KafkaExtension<X> implements Extension {
         try {
             executorService = InitialContext.doLookup("java:comp/DefaultManagedExecutorService");
         } catch (NamingException e) {
-            logger.warn("Could not find a managed ExecutorService, creating one manually", e);
+            logger.warn("Could not find a managed ExecutorService, creating one manually");
             executorService = new ThreadPoolExecutor(16, 16, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>());
         }
 
