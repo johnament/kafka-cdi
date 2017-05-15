@@ -74,7 +74,7 @@ public class KafkaExtension<X> implements Extension {
         }
     }
 
-    public void registerListeners(@Observes ProcessAnnotatedType pat) {
+    public void registerListeners(@Observes @WithAnnotations(Consumer.class) ProcessAnnotatedType pat) {
 
         logger.trace("scanning type: " + pat.getAnnotatedType().getJavaClass().getName());
         final AnnotatedType<X> annotatedType = pat.getAnnotatedType();
