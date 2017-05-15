@@ -1,4 +1,4 @@
-= CafDI - A simple CDI extension for Apache Kafka
+= Kafka-CDI - A simple CDI extension for Apache Kafka
 
 image:https://img.shields.io/travis/matzew/cafdi/master.svg[Build Status (Travis CI), link=https://travis-ci.org/matzew/cafdi]
 image:https://img.shields.io/:license-Apache2-blue.svg[License, link=http://www.apache.org/licenses/LICENSE-2.0]
@@ -17,9 +17,9 @@ In a Maven managed project simply the following to your `pom.xml`:
 ----
 ...
   <dependency>
-    <groupId>net.wessendorf.kafka</groupId>
-    <artifactId>cafdi</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <groupId>net.wessendorf</groupId>
+    <artifactId>kafka-cafdi</artifactId>
+    <version>0.0.1</version>
   </dependency>
 ...
 ----
