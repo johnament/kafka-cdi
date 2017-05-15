@@ -23,8 +23,8 @@
     <version>9</version>
   </parent>
 
-  <groupId>net.wessendorf</groupId>
-  <artifactId>kafka-cdi</artifactId>
+  <groupId>net.wessendorf.kafka</groupId>
+  <artifactId>kafka-cdi-extension</artifactId>
   <version>0.0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>kafka-cdi</name>
