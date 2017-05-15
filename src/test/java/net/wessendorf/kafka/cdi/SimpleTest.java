@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.wessendorf.kafka.cafdi;
+package net.wessendorf.kafka.cdi;
 
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;

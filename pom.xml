@@ -17,19 +17,41 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>net.wessendorf.kafka</groupId>
-  <artifactId>cafdi</artifactId>
+
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>9</version>
+  </parent>
+
+  <groupId>net.wessendorf</groupId>
+  <artifactId>kafka-cdi</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
+  <name>kafka-cdi</name>
+  <description>simple CDI extension for Apache Kafka</description>
 
-  <properties>
-    <version.kafka.clients>0.10.2.0</version.kafka.clients>
-    <version.kafka.scala>2.11</version.kafka.scala>
-    <version.debezium>0.5.0</version.debezium>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+  <scm>
+    <connection>scm:git:git://github.com/matzew/kafka-cdi.git</connection>
+    <developerConnection>scm:git:git@github.com:matzew/kafka-cdi.git</developerConnection>
+    <url>https://github.com/matzew/kafka-cdi</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>matzew</id>
+      <name>Matthias Wessendorf</name>
+    </developer>
+  </developers>
 
   <dependencyManagement>
     <dependencies>
@@ -56,6 +78,12 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
+      <version>${version.kafka.clients}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
       <version>${version.kafka.clients}</version>
     </dependency>
 
@@ -114,5 +142,28 @@
     </dependency>
 
   </dependencies>
-</project>
 
+  <repositories>
+    <repository>
+      <id>snapshots-oss.sonatype.org</id>
+      <name>Sonatype Snapshots Repository</name>
+      <url>http://oss.sonatype.org/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <properties>
+    <version.kafka.clients>0.10.2.1</version.kafka.clients>
+    <version.kafka.scala>2.11</version.kafka.scala>
+    <version.debezium>0.5.0</version.debezium>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+</project>
