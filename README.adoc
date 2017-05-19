@@ -1,6 +1,6 @@
 = Kafka-CDI - A simple CDI extension for Apache Kafka
 
-image:https://img.shields.io/travis/matzew/cafdi/master.svg[Build Status (Travis CI), link=https://travis-ci.org/matzew/cafdi]
+image:https://img.shields.io/travis/matzew/kafka-cdi/master.svg[Build Status (Travis CI), link=https://travis-ci.org/matzew/kafka-cdi]
 image:https://img.shields.io/:license-Apache2-blue.svg[License, link=http://www.apache.org/licenses/LICENSE-2.0]
 
 Making it easy to use Apache Kafka's Java client API in a CDI managed environemnt
