@@ -69,8 +69,9 @@ public class KafkaExtension<X> implements Extension {
 
         // we just do the first
         if (kafkaConfig != null && bootstrapServers == null) {
+            logger.warn("Git: " + kafkaConfig.bootstrapServers());
             logger.info("setting bootstrap.servers IP");
-            bootstrapServers = kafkaConfig.bootstrapServers();
+            bootstrapServers = simpleBootstrapServerResolver(kafkaConfig.bootstrapServers());
         }
     }
 
@@ -198,4 +199,21 @@ public class KafkaExtension<X> implements Extension {
     }
 
 
+    private String simpleBootstrapServerResolver(final String expression) {
+
+        if (expression.startsWith("#{")) {
+
+            final String variable = expression.substring(2, expression.length() - 1);
+            String host = System.getProperty(variable);
+            if (host == null) {
+                host = System.getenv(variable);
+            }
+            if (host == null) {
+                throw new RuntimeException("Hostname is null");
+            }
+            return host;
+        } else {
+            return expression;
+        }
+    }
 }

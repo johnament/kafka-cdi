@@ -19,7 +19,7 @@ import net.wessendorf.kafka.SimpleKafkaProducer;
 import net.wessendorf.kafka.cdi.annotation.KafkaConfig;
 import net.wessendorf.kafka.cdi.annotation.Producer;
 
-@KafkaConfig(bootstrapServers = "localhost:9092")
+@KafkaConfig(bootstrapServers = "#{KAFKA_SERVICE_HOST}")
 public class KafkaService {
 
     @Producer(topic = "the_topic")
