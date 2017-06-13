@@ -69,8 +69,8 @@ public class KafkaExtension<X> implements Extension {
 
         // we just do the first
         if (kafkaConfig != null && bootstrapServers == null) {
-            logger.warn("Git: " + kafkaConfig.bootstrapServers());
             logger.info("setting bootstrap.servers IP");
+            logger.trace("Got '{}'", kafkaConfig.bootstrapServers());
             bootstrapServers = simpleBootstrapServerResolver(kafkaConfig.bootstrapServers());
         }
     }
