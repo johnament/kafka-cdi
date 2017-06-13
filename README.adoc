@@ -19,7 +19,7 @@ In a Maven managed project simply the following to your `pom.xml`:
   <dependency>
     <groupId>net.wessendorf.kafka</groupId>
     <artifactId>kafka-cdi-extension</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.4</version>
   </dependency>
 ...
 ----
