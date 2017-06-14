@@ -50,6 +50,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.newSetFromMap;
+import static net.wessendorf.kafka.cdi.extension.VerySimpleEnvironmentResolver.simpleBootstrapServerResolver;
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
@@ -199,21 +200,4 @@ public class KafkaExtension<X> implements Extension {
     }
 
 
-    private String simpleBootstrapServerResolver(final String expression) {
-
-        if (expression.startsWith("#{")) {
-
-            final String variable = expression.substring(2, expression.length() - 1);
-            String host = System.getProperty(variable);
-            if (host == null) {
-                host = System.getenv(variable);
-            }
-            if (host == null) {
-                throw new RuntimeException("Hostname is null");
-            }
-            return host;
-        } else {
-            return expression;
-        }
-    }
 }

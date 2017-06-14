@@ -93,7 +93,7 @@ A minimal of configuration is currently needed. For that there is a `@KafkaConfi
 
 [source,java]
 ----
-@KafkaConfig(bootstrapServers = "172.17.0.3:9092")
+@KafkaConfig(bootstrapServers = "#{SOME_HOST}:#{SOME_PORT}")
 public class MyService {
    ...
 }
