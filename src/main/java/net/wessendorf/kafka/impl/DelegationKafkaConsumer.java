@@ -59,10 +59,28 @@ public class DelegationKafkaConsumer implements Runnable {
 
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
-        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyType).deserializer().getClass());
-        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(annotatedListenerMethod.getJavaMember().getParameterTypes()[0]).deserializer().getClass());
+        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyType(keyType, annotatedMethod)).deserializer().getClass());
+        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(valueType(annotatedMethod)).deserializer().getClass());
 
         consumer = new KafkaConsumer(properties);
+    }
+
+    private Class<?> keyType(final Class<?> defaultKeyType, final AnnotatedMethod annotatedMethod) {
+
+        if (annotatedMethod.getJavaMember().getParameterTypes().length == 2) {
+            return annotatedMethod.getJavaMember().getParameterTypes()[0];
+        } else {
+            return defaultKeyType;
+        }
+    }
+
+    private Class<?> valueType(final AnnotatedMethod annotatedMethod) {
+
+        if (annotatedMethod.getJavaMember().getParameterTypes().length == 2) {
+            return annotatedMethod.getJavaMember().getParameterTypes()[1];
+        } else {
+            return annotatedMethod.getJavaMember().getParameterTypes()[0];
+        }
     }
 
     public void initialize() {
@@ -88,7 +106,15 @@ public class DelegationKafkaConsumer implements Runnable {
 
                 try {
                     logger.trace("dispatching payload {} to consumer",record.value());
-                    annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
+
+                    if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 2) {
+                        annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
+
+                    } else {
+                        annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
+                    }
+
+
                     logger.trace("dispatched payload {} to consumer",record.value());
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     logger.error("error dispatching received value to consumer", e);

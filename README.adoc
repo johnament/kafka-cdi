@@ -67,6 +67,26 @@ public class MyListenerService {
 ]
 ----
 
+Receiving the key and the value is also possible:
+
+[source,java]
+----
+public class MyListenerService {
+
+  private Logger logger = LoggerFactory.getLogger(MyListenerService.class);
+
+  /**
+   * Simple listener that receives messages from the Kafka broker
+    */
+  @Consumer(topic = "myTopic", groupId = "myGroupID")
+  public void receiver(final String key, final String value) {
+    logger.info("That's what I got: " + message);
+  }
+]
+----
+
+
+
 === Global Configuration of the Kafka cluster
 
 A minimal of configuration is currently needed. For that there is a `@KafkaConfig` annotation. The first occurrence is used:
