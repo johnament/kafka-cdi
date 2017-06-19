@@ -18,9 +18,13 @@ package net.wessendorf.beans;
 import net.wessendorf.kafka.SimpleKafkaProducer;
 import net.wessendorf.kafka.cdi.annotation.KafkaConfig;
 import net.wessendorf.kafka.cdi.annotation.Producer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @KafkaConfig(bootstrapServers = "#{KAFKA_SERVICE_HOST}")
 public class KafkaService {
+
+    Logger logger = LoggerFactory.getLogger(KafkaService.class);
 
     @Producer(topic = "the_topic")
     private SimpleKafkaProducer<Integer, String> producer;
@@ -30,6 +34,7 @@ public class KafkaService {
     }
 
     public void sendMessage() {
+        logger.info("sending message to the topic....");
         producer.send("This is only a test");
     }
 
