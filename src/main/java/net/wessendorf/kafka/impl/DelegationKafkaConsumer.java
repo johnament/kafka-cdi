@@ -31,15 +31,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
 public class DelegationKafkaConsumer implements Runnable {
 
     private final Logger logger = LoggerFactory.getLogger(DelegationKafkaConsumer.class);
 
     private Object consumerInstance;
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
     final Properties properties = new Properties();
     final private KafkaConsumer<String, String> consumer;
@@ -99,8 +103,7 @@ public class DelegationKafkaConsumer implements Runnable {
         consumer.subscribe(Arrays.asList(topic));
         logger.debug("subscribed to {}", topic);
 
-        boolean running = true;
-        while (running) {
+        while (running.get()) {
             ConsumerRecords<String, String> records = consumer.poll(100);
             for (ConsumerRecord<String, String> record : records) {
 
@@ -121,5 +124,12 @@ public class DelegationKafkaConsumer implements Runnable {
                 }
             }
         }
+        logger.error("preparing cosmer close, due to shutdown");
+        consumer.unsubscribe();
+        consumer.close();
+    }
+
+    public void prepareShutdown() {
+        this.running.set(false);
     }
 }
