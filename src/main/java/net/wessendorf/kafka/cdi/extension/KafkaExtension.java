@@ -31,6 +31,7 @@ import javax.enterprise.inject.spi.AfterDeploymentValidation;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
@@ -59,6 +60,8 @@ public class KafkaExtension<X> implements Extension {
 
     private String bootstrapServers = null;
     private final Set<AnnotatedMethod<?>> listenerMethods = newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<DelegationKafkaConsumer> managedConsumers = newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<org.apache.kafka.clients.producer.Producer> managedProducers = newSetFromMap(new ConcurrentHashMap<>());
     private final Logger logger = LoggerFactory.getLogger(KafkaExtension.class);
 
 
@@ -99,9 +102,19 @@ public class KafkaExtension<X> implements Extension {
 
         logger.debug("wiring annotated listener method to internal Kafka Consumer");
         listenerMethods.forEach( am -> {
-            final DelegationKafkaConsumer abc = new DelegationKafkaConsumer(bootstrapServers, am, bm);
+            final DelegationKafkaConsumer frameworkConsumer = new DelegationKafkaConsumer(bootstrapServers, am, bm);
+            managedConsumers.add(frameworkConsumer);
+            submitToExecutor(frameworkConsumer);
+        });
+    }
 
-            submitToExecutor(abc);
+    public void beforeShutdown(@Observes final BeforeShutdown bs) {
+        managedConsumers.forEach(delegationKafkaConsumer -> {
+            delegationKafkaConsumer.shutdown();
+        });
+
+        managedProducers.forEach(managedProducer -> {
+            managedProducer.close();
         });
     }
 
@@ -129,6 +142,8 @@ public class KafkaExtension<X> implements Extension {
                                     defaultTopic,
                                     CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0]).serializer().getClass(),
                                     CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[1]).serializer().getClass());
+
+                            managedProducers.add(p);
 
                             try {
                                 field.set(instance, p);
