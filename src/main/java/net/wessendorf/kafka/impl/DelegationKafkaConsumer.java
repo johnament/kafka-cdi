@@ -35,7 +35,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
 public class DelegationKafkaConsumer implements Runnable {
 
@@ -44,7 +46,7 @@ public class DelegationKafkaConsumer implements Runnable {
     /*
      * True if a consumer is running; otherwise false
      */
-    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final AtomicBoolean running = new AtomicBoolean(Boolean.TRUE);
 
     private Object consumerInstance;
     final Properties properties = new Properties();
@@ -53,8 +55,7 @@ public class DelegationKafkaConsumer implements Runnable {
     private final AnnotatedMethod annotatedListenerMethod;
     private final BeanManager beanManager;
 
-    public DelegationKafkaConsumer(final String bootstrapServers, final AnnotatedMethod annotatedMethod,
-            final BeanManager beanManager) {
+    public DelegationKafkaConsumer(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
         final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
         this.topic = consumerAnnotation.topic();
         final String groupId = consumerAnnotation.groupId();
@@ -65,10 +66,8 @@ public class DelegationKafkaConsumer implements Runnable {
 
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
-        properties.put(KEY_DESERIALIZER_CLASS_CONFIG,
-                CafdiSerdes.serdeFrom(keyType(keyType, annotatedMethod)).deserializer().getClass());
-        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,
-                CafdiSerdes.serdeFrom(valueType(annotatedMethod)).deserializer().getClass());
+        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyType(keyType, annotatedMethod)).deserializer().getClass());
+        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valueType(annotatedMethod)).deserializer().getClass());
 
         consumer = new KafkaConsumer(properties);
     }
@@ -132,7 +131,7 @@ public class DelegationKafkaConsumer implements Runnable {
                 throw e;
             }
         } finally {
-            logger.error("Close the consumer.");
+            logger.info("Close the consumer.");
             consumer.close();
         }
     }
@@ -149,7 +148,7 @@ public class DelegationKafkaConsumer implements Runnable {
      */
     public void shutdown() {
         logger.info("Shutting down the consumer.");
-        running.set(false);
+        running.set(Boolean.FALSE);
         consumer.wakeup();
     }
 
