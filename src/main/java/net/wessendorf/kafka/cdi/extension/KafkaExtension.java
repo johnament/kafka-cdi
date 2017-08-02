@@ -61,6 +61,7 @@ public class KafkaExtension<X> implements Extension {
     private String bootstrapServers = null;
     private final Set<AnnotatedMethod<?>> listenerMethods = newSetFromMap(new ConcurrentHashMap<>());
     private final Set<DelegationKafkaConsumer> managedConsumers = newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<org.apache.kafka.clients.producer.Producer> managedProducers = newSetFromMap(new ConcurrentHashMap<>());
     private final Logger logger = LoggerFactory.getLogger(KafkaExtension.class);
 
 
@@ -111,6 +112,10 @@ public class KafkaExtension<X> implements Extension {
         managedConsumers.forEach(delegationKafkaConsumer -> {
             delegationKafkaConsumer.shutdown();
         });
+
+        managedProducers.forEach(managedProducer -> {
+            managedProducer.close();
+        });
     }
 
     public <X> void processInjectionTarget(@Observes ProcessInjectionTarget<X> pit) {
@@ -137,6 +142,8 @@ public class KafkaExtension<X> implements Extension {
                                     defaultTopic,
                                     CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0]).serializer().getClass(),
                                     CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[1]).serializer().getClass());
+
+                            managedProducers.add(p);
 
                             try {
                                 field.set(instance, p);
