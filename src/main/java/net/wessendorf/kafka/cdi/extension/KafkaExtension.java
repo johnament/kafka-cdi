@@ -30,6 +30,7 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedType;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.enterprise.inject.spi.Extension;
@@ -73,8 +74,7 @@ public class KafkaExtension<X> implements Extension {
 
         // we just do the first
         if (kafkaConfig != null && bootstrapServers == null) {
-            logger.info("setting bootstrap.servers IP");
-            logger.trace("Got '{}'", kafkaConfig.bootstrapServers());
+            logger.info("setting bootstrap.servers IP for, {}", kafkaConfig.bootstrapServers());
             bootstrapServers = simpleBootstrapServerResolver(kafkaConfig.bootstrapServers());
         }
     }
@@ -102,7 +102,14 @@ public class KafkaExtension<X> implements Extension {
 
         logger.debug("wiring annotated listener method to internal Kafka Consumer");
         listenerMethods.forEach( am -> {
-            final DelegationKafkaConsumer frameworkConsumer = new DelegationKafkaConsumer(bootstrapServers, am, bm);
+
+            final Bean<DelegationKafkaConsumer> bean = (Bean<DelegationKafkaConsumer>) bm.getBeans(DelegationKafkaConsumer.class).iterator().next();
+            final CreationalContext<DelegationKafkaConsumer> ctx = bm.createCreationalContext(bean);
+            final DelegationKafkaConsumer frameworkConsumer = (DelegationKafkaConsumer) bm.getReference(bean, DelegationKafkaConsumer.class, ctx);
+
+            // hooking it all together
+            frameworkConsumer.initialize(bootstrapServers, am, bm);
+
             managedConsumers.add(frameworkConsumer);
             submitToExecutor(frameworkConsumer);
         });
@@ -197,10 +204,7 @@ public class KafkaExtension<X> implements Extension {
             executorService = new ThreadPoolExecutor(16, 16, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>());
         }
 
-        // hooking it all together
-        delegationKafkaConsumer.initialize();
-
-        // and submit the consumer
+        // submit the consumer
         executorService.submit(delegationKafkaConsumer);
     }
 
