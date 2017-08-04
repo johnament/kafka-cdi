@@ -50,26 +50,12 @@ public class DelegationKafkaConsumer implements Runnable {
 
     private Object consumerInstance;
     final Properties properties = new Properties();
-    final private KafkaConsumer<String, String> consumer;
-    final private String topic;
-    private final AnnotatedMethod annotatedListenerMethod;
-    private final BeanManager beanManager;
+    private KafkaConsumer<String, String> consumer;
+    private String topic;
+    private AnnotatedMethod annotatedListenerMethod;
+    private BeanManager beanManager;
 
-    public DelegationKafkaConsumer(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
-        final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
-        this.topic = consumerAnnotation.topic();
-        final String groupId = consumerAnnotation.groupId();
-        final Class<?> keyType = consumerAnnotation.keyType();
-
-        this.annotatedListenerMethod = annotatedMethod;
-        this.beanManager = beanManager;
-
-        properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(GROUP_ID_CONFIG, groupId);
-        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyType(keyType, annotatedMethod)).deserializer().getClass());
-        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valueType(annotatedMethod)).deserializer().getClass());
-
-        consumer = new KafkaConsumer(properties);
+    public DelegationKafkaConsumer() {
     }
 
     private Class<?> keyType(final Class<?> defaultKeyType, final AnnotatedMethod annotatedMethod) {
@@ -90,7 +76,21 @@ public class DelegationKafkaConsumer implements Runnable {
         }
     }
 
-    public void initialize() {
+    public void initialize(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
+        final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
+        this.topic = consumerAnnotation.topic();
+        final String groupId = consumerAnnotation.groupId();
+        final Class<?> keyType = consumerAnnotation.keyType();
+
+        this.annotatedListenerMethod = annotatedMethod;
+        this.beanManager = beanManager;
+
+        properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(GROUP_ID_CONFIG, groupId);
+        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyType(keyType, annotatedMethod)).deserializer().getClass());
+        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valueType(annotatedMethod)).deserializer().getClass());
+
+        consumer = new KafkaConsumer(properties);
 
         final Set<Bean<?>> beans = beanManager.getBeans(annotatedListenerMethod.getJavaMember().getDeclaringClass());
         final Bean<?> propertyResolverBean = beanManager.resolve(beans);
