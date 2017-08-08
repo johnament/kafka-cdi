@@ -22,6 +22,8 @@ import net.wessendorf.kafka.cdi.annotation.Producer;
 import net.wessendorf.kafka.impl.DelegationKafkaConsumer;
 import net.wessendorf.kafka.impl.InjectedKafkaProducer;
 import net.wessendorf.kafka.serialization.CafdiSerdes;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,11 +146,17 @@ public class KafkaExtension<X> implements Extension {
                         if (field.getType().isAssignableFrom(SimpleKafkaProducer.class)) {
                             field.setAccessible(Boolean.TRUE);
 
+                            final Serde<?> keySerde = CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0]);
+                            final Serde<?> valSerde = CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[1]);
+
                             final org.apache.kafka.clients.producer.Producer p = createInjectionProducer(
                                     bootstrapServers,
                                     defaultTopic,
-                                    CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0]).serializer().getClass(),
-                                    CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[1]).serializer().getClass());
+                                    keySerde.serializer().getClass(),
+                                    valSerde.serializer().getClass(),
+                                    keySerde.serializer(),
+                                    valSerde.serializer()
+                            );
 
                             managedProducers.add(p);
 
@@ -208,14 +216,14 @@ public class KafkaExtension<X> implements Extension {
         executorService.submit(delegationKafkaConsumer);
     }
 
-    private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final String topic, final Class<?> keySerializerClass, final Class<?> valSerializerClass) {
+    private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final String topic, final Class<?> keySerializerClass, final Class<?> valSerializerClass, final Serializer<?> keySerializer, final Serializer<?> valSerializer ) {
 
         final Properties properties = new Properties();
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(KEY_SERIALIZER_CLASS_CONFIG, keySerializerClass);
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, valSerializerClass);
 
-        return new InjectedKafkaProducer(properties, topic);
+        return new InjectedKafkaProducer(properties, topic, keySerializer, valSerializer);
     }
 
 

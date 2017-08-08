@@ -19,6 +19,7 @@ import net.wessendorf.kafka.SimpleKafkaProducer;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -27,7 +28,7 @@ public class InjectedKafkaProducer<K, V> extends org.apache.kafka.clients.produc
 
     private final String topic;
 
-    public InjectedKafkaProducer(final Map<String, Object> configs, final String topic) {
+    public InjectedKafkaProducer(final Map<String, Object> configs, final String topic, final Serializer<K> keySerializer, final Serializer<V> valueSerializer) {
         super(configs);
         this.topic = topic;
     }

@@ -17,6 +17,8 @@ package net.wessendorf.kafka.serialization;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.json.JsonObject;
 
@@ -24,6 +26,9 @@ import javax.json.JsonObject;
  * Extension to normal Kafka Serdes, for (de)serialization of payloads and keys on kafka records.
  */
 public class CafdiSerdes extends Serdes {
+
+    private static final Logger logger = LoggerFactory.getLogger(CafdiSerdes.class);
+
     /*
      * A serde for nullable {@code JsonObject} type.
      */
@@ -31,11 +36,11 @@ public class CafdiSerdes extends Serdes {
         return new JsonObjectSerde();
     }
 
-
-    static public final class JsonObjectSerde extends WrapperSerde<JsonObject> {
-        public JsonObjectSerde() {
-            super(new JsonObjectSerializer(), new JsonObjectDeserializer());
-        }
+    /*
+     * A generic serde for objects of type T.
+     */
+    static public <T> Serde<T> Generic(Class<T> type) {
+        return new GenericSerde(type);
     }
 
     static public <T> Serde<T> serdeFrom(Class<T> type) {
@@ -43,8 +48,27 @@ public class CafdiSerdes extends Serdes {
             return (Serde<T>) JsonObject();
         }
 
-        // delegate to look up default Kafka SerDes:
-        return Serdes.serdeFrom(type);
+        // look up default Kafka SerDes
+        // if the class type is not supported an exception is thrown
+        try {
+            return Serdes.serdeFrom(type);
+        }
+        // If an exception is thrown, use custom generic serdes
+        catch (IllegalArgumentException e) {
+            logger.warn("Class type is not supported. Using generic serdes");
+            return (Serde<T>) Generic(type);
+        }
     }
 
+    static public final class JsonObjectSerde extends WrapperSerde<JsonObject> {
+        public JsonObjectSerde() {
+            super(new JsonObjectSerializer(), new JsonObjectDeserializer());
+        }
+    }
+
+    static public final class GenericSerde<T> extends WrapperSerde<T> {
+        public GenericSerde(Class<T> type) {
+            super(new GenericSerializer<T>(type), new GenericDeserializer<T>(type));
+        }
+    }
 }
