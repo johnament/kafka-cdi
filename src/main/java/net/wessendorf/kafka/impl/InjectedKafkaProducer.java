@@ -28,8 +28,8 @@ public class InjectedKafkaProducer<K, V> extends org.apache.kafka.clients.produc
 
     private final String topic;
 
-    public InjectedKafkaProducer(final Map<String, Object> configs, final String topic, final Serializer<K> keySerializer, final Serializer<V> valueSerializer) {
-        super(configs);
+    public InjectedKafkaProducer(final Map<String, Object> configs, final String topic, final Serializer<K> keySerializer, final Serializer<V> valSerializer) {
+        super(configs, keySerializer, valSerializer);
         this.topic = topic;
     }
 

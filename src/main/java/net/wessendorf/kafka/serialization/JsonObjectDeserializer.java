@@ -41,15 +41,8 @@ public class JsonObjectDeserializer implements Deserializer<JsonObject> {
             return null;
 
         final ByteArrayInputStream bias = new ByteArrayInputStream(data);
-        final JsonReader reader;
 
-        try {
-            reader = Json.createReader(bias);
-        } catch(JsonException e) {
-            throw new SerializationException("Unable to create Json reader", e);
-        }
-
-        try {
+        try(JsonReader reader = Json.createReader(bias)) {
             return reader.readObject();
         } catch(Exception e) {
             throw new SerializationException("Unable to deserialize JsonObject", e);

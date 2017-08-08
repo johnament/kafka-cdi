@@ -20,6 +20,7 @@ import net.wessendorf.kafka.serialization.CafdiSerdes;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,10 +132,13 @@ public class DelegationKafkaConsumer implements Runnable {
                     }
                 }
             }
+        } catch (SerializationException e) {
+            logger.warn("Consumer exception", e);
+            throw e;
         } catch (WakeupException e) {
             // Ignore exception if closing
             if (isRunning()) {
-                logger.warn("Exception", e);
+                logger.trace("Exception", e);
                 throw e;
             }
         } finally {
