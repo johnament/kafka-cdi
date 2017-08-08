@@ -46,8 +46,8 @@ public class JsonObjectSerializer implements Serializer<JsonObject> {
             writer.writeObject(data);
             writer.close();
             baso.flush();
-        } catch (Exception ioe) {
-            throw new SerializationException("Error serialzing JsonObject data");
+        } catch (Exception e) {
+            throw new SerializationException("Error serializing JsonObject data");
         }
 
         return baso.toByteArray();
