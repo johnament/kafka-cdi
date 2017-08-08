@@ -29,6 +29,7 @@ import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
@@ -50,15 +51,15 @@ public class DelegationKafkaConsumer implements Runnable {
 
     private Object consumerInstance;
     final Properties properties = new Properties();
-    private KafkaConsumer<String, String> consumer;
+    private KafkaConsumer<?, ?> consumer;
     private String topic;
     private AnnotatedMethod annotatedListenerMethod;
-    private BeanManager beanManager;
 
     public DelegationKafkaConsumer() {
     }
 
-    private Class<?> keyType(final Class<?> defaultKeyType, final AnnotatedMethod annotatedMethod) {
+
+    private Class<?> consumerKeyType(final Class<?> defaultKeyType, final AnnotatedMethod annotatedMethod) {
 
         if (annotatedMethod.getJavaMember().getParameterTypes().length == 2) {
             return annotatedMethod.getJavaMember().getParameterTypes()[0];
@@ -67,7 +68,7 @@ public class DelegationKafkaConsumer implements Runnable {
         }
     }
 
-    private Class<?> valueType(final AnnotatedMethod annotatedMethod) {
+    private Class<?> consumerValueType(final AnnotatedMethod annotatedMethod) {
 
         if (annotatedMethod.getJavaMember().getParameterTypes().length == 2) {
             return annotatedMethod.getJavaMember().getParameterTypes()[1];
@@ -76,21 +77,28 @@ public class DelegationKafkaConsumer implements Runnable {
         }
     }
 
+    private <K, V> void createKafkaConsumer(final Class<K> type, final Class<V> val, final Properties consumerProperties) {
+        consumer = new KafkaConsumer<K, V>(consumerProperties);
+    }
+
+
     public void initialize(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
         final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
         this.topic = consumerAnnotation.topic();
         final String groupId = consumerAnnotation.groupId();
-        final Class<?> keyType = consumerAnnotation.keyType();
+        final Class<?> recordKeyType = consumerAnnotation.keyType();
 
         this.annotatedListenerMethod = annotatedMethod;
-        this.beanManager = beanManager;
+
+        final Class<?> keyTypeClass = consumerKeyType(recordKeyType, annotatedMethod);
+        final Class<?> valTypeClass = consumerValueType(annotatedMethod);
 
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
-        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyType(keyType, annotatedMethod)).deserializer().getClass());
-        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valueType(annotatedMethod)).deserializer().getClass());
+        properties.put(KEY_DESERIALIZER_CLASS_CONFIG,  CafdiSerdes.serdeFrom(keyTypeClass).deserializer().getClass());
+        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valTypeClass).deserializer().getClass());
 
-        consumer = new KafkaConsumer(properties);
+        createKafkaConsumer(keyTypeClass, valTypeClass, properties);
 
         final Set<Bean<?>> beans = beanManager.getBeans(annotatedListenerMethod.getJavaMember().getDeclaringClass());
         final Bean<?> propertyResolverBean = beanManager.resolve(beans);
@@ -106,8 +114,8 @@ public class DelegationKafkaConsumer implements Runnable {
             consumer.subscribe(Arrays.asList(topic));
             logger.trace("subscribed to {}", topic);
             while (isRunning()) {
-                ConsumerRecords<String, String> records = consumer.poll(100);
-                for (ConsumerRecord<String, String> record : records) {
+                final ConsumerRecords<?, ?> records = consumer.poll(100);
+                for (final ConsumerRecord<?, ?> record : records) {
                     try {
                         logger.trace("dispatching payload {} to consumer", record.value());
 
