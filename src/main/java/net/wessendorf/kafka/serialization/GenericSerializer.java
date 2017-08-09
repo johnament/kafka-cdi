@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 Matthias Wessendorf.
+ * Copyright (C) 2017 Dimitra Zuccarelli.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,43 @@
  */
 package net.wessendorf.kafka.serialization;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonWriter;
-import java.io.ByteArrayOutputStream;
 import java.util.Map;
 
-public class JsonObjectSerializer implements Serializer<JsonObject> {
+public class GenericSerializer<T> implements Serializer<T> {
 
-    public JsonObjectSerializer() {
+    private Class<T> type;
+    private ObjectMapper mapper = new ObjectMapper();
+
+    public GenericSerializer() {
+    }
+
+    public GenericSerializer(Class<T> type) {
+        this.type = type;
     }
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
-
     }
 
     @Override
-    public byte[] serialize(String topic, JsonObject data) {
-        if (data == null)
+    public byte[] serialize(String topic, T data) {
+        if (data == null) {
             return null;
-
-        final ByteArrayOutputStream baso = new ByteArrayOutputStream();
-        final JsonWriter writer = Json.createWriter(baso);
-
-        try {
-            writer.writeObject(data);
-            writer.close();
-            baso.flush();
-        } catch (Exception e) {
-            throw new SerializationException("Error serializing JsonObject data");
         }
 
-        return baso.toByteArray();
+        try {
+            return mapper.writeValueAsBytes(data);
+        } catch (JsonProcessingException e) {
+            throw new SerializationException("Unable to serialize object", e);
+        }
     }
 
     @Override
     public void close() {
-
     }
 }

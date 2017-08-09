@@ -20,6 +20,7 @@ import net.wessendorf.kafka.serialization.CafdiSerdes;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,6 @@ import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
@@ -78,7 +78,7 @@ public class DelegationKafkaConsumer implements Runnable {
     }
 
     private <K, V> void createKafkaConsumer(final Class<K> keyType, final Class<V> valueType, final Properties consumerProperties) {
-        consumer = new KafkaConsumer<K, V>(consumerProperties);
+        consumer = new KafkaConsumer<K, V>(consumerProperties, CafdiSerdes.serdeFrom(keyType).deserializer(), CafdiSerdes.serdeFrom(valueType).deserializer());
     }
 
 
@@ -132,6 +132,9 @@ public class DelegationKafkaConsumer implements Runnable {
                     }
                 }
             }
+        } catch (SerializationException e) {
+            logger.warn("Consumer exception", e);
+            throw e;
         } catch (WakeupException e) {
             // Ignore exception if closing
             if (isRunning()) {

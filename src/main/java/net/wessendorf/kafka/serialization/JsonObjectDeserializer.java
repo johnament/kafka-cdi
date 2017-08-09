@@ -15,9 +15,11 @@
  */
 package net.wessendorf.kafka.serialization;
 
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import javax.json.Json;
+import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.ByteArrayInputStream;
@@ -39,10 +41,12 @@ public class JsonObjectDeserializer implements Deserializer<JsonObject> {
             return null;
 
         final ByteArrayInputStream bias = new ByteArrayInputStream(data);
-        final JsonReader reader = Json.createReader(bias);
 
-        return reader.readObject();
-
+        try(JsonReader reader = Json.createReader(bias)) {
+            return reader.readObject();
+        } catch(Exception e) {
+            throw new SerializationException("Unable to deserialize JsonObject", e);
+        }
     }
 
     @Override
