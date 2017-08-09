@@ -2,8 +2,10 @@
 
 image:https://img.shields.io/travis/matzew/kafka-cdi/master.svg[Build Status (Travis CI), link=https://travis-ci.org/matzew/kafka-cdi]
 image:https://img.shields.io/:license-Apache2-blue.svg[License, link=http://www.apache.org/licenses/LICENSE-2.0]
+image:https://img.shields.io/maven-central/v/net.wessendorf.kafka/kafka-cdi-extension.svg[Maven Central, link=http://search.maven.org/#search%7Cga%7C1%7Ckafka-cdi-extension]
+image:http://www.javadoc.io/badge/net.wessendorf.kafka/kafka-cdi-extension.svg[Javadocs, link=http://www.javadoc.io/doc/net.wessendorf.kafka/kafka-cdi-extension]
 
-Making it easy to use Apache Kafka's Java client API in a CDI managed environment
+Making it easy to use Apache Kafka's Java client API in a CDI managed environment!
 
 == Getting started
 
