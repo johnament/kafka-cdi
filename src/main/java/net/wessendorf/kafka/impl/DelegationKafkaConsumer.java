@@ -77,7 +77,7 @@ public class DelegationKafkaConsumer implements Runnable {
         }
     }
 
-    private <K, V> void createKafkaConsumer(final Class<K> type, final Class<V> val, final Properties consumerProperties) {
+    private <K, V> void createKafkaConsumer(final Class<K> keyType, final Class<V> valueType, final Properties consumerProperties) {
         consumer = new KafkaConsumer<K, V>(consumerProperties);
     }
 
