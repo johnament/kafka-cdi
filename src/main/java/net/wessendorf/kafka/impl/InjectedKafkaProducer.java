@@ -26,27 +26,24 @@ import java.util.concurrent.Future;
 
 public class InjectedKafkaProducer<K, V> extends org.apache.kafka.clients.producer.KafkaProducer implements SimpleKafkaProducer<K, V> {
 
-    private final String topic;
-
-    public InjectedKafkaProducer(final Map<String, Object> configs, final String topic, final Serializer<K> keySerializer, final Serializer<V> valSerializer) {
+    public InjectedKafkaProducer(final Map<String, Object> configs, final Serializer<K> keySerializer, final Serializer<V> valSerializer) {
         super(configs, keySerializer, valSerializer);
-        this.topic = topic;
     }
 
 
-    public Future<RecordMetadata> send(V payload) {
+    public Future<RecordMetadata> send(final String topic, final V payload) {
         return this.send(new ProducerRecord(topic, payload));
     }
 
-    public Future<RecordMetadata> send(V payload, Callback callback) {
+    public Future<RecordMetadata> send(final String topic, final V payload, final Callback callback) {
         return this.send(new ProducerRecord(topic, payload), callback);
     }
 
-    public Future<RecordMetadata> send(K key, V payload) {
+    public Future<RecordMetadata> send(final String topic, final K key, final V payload) {
         return this.send(new ProducerRecord(topic, key, payload));
     }
 
-    public Future<RecordMetadata> send(K key, V payload, Callback callback) {
+    public Future<RecordMetadata> send(final String topic, final K key, final V payload, final Callback callback) {
         return this.send(new ProducerRecord(topic, key, payload), callback);
     }
 
