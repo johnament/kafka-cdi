@@ -21,7 +21,7 @@ In a Maven managed project simply the following to your `pom.xml`:
   <dependency>
     <groupId>net.wessendorf.kafka</groupId>
     <artifactId>kafka-cdi-extension</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.8</version>
   </dependency>
 ...
 ----
@@ -37,14 +37,14 @@ public class MyPublisherService {
 
   private Logger logger = LoggerFactory.getLogger(MyPublisherService.class);
 
-  @Producer(topic = "myTopic")
+  @Producer
   SimpleKafkaProducer<Integer, String> producer;
 
   /**
    * A simple service method, that sends payload over the wire
    */
   public void hello() {
-    producer.send("My Message");
+    producer.send("myTopic", "My Message");
   }
 }
 ----
@@ -112,11 +112,11 @@ To send serialize a JsonObject, simply specify the type, like:
 [source,java]
 ----
 ...
-@Producer(topic = "myTopic")
+@Producer
 SimpleKafkaProducer<Integer, JsonObject> producer;
 ...
 
-producer.send(myJsonObj);
+producer.send("myTopic", myJsonObj);
 ----
 
 ==== JsonObject Deserializer
