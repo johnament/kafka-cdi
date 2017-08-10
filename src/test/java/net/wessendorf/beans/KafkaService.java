@@ -26,7 +26,7 @@ public class KafkaService {
 
     Logger logger = LoggerFactory.getLogger(KafkaService.class);
 
-    @Producer(topic = "the_topic")
+    @Producer
     private SimpleKafkaProducer<Integer, String> producer;
 
     public SimpleKafkaProducer returnProducer() {
@@ -35,7 +35,7 @@ public class KafkaService {
 
     public void sendMessage() {
         logger.info("sending message to the topic....");
-        producer.send("This is only a test");
+        producer.send("the_topic", "This is only a test");
     }
 
 }

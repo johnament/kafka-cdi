@@ -27,9 +27,9 @@ import java.util.concurrent.Future;
  */
 public interface SimpleKafkaProducer<K, V> {
 
-    Future<RecordMetadata> send(V payload);
-    Future<RecordMetadata> send(V payload, Callback callback);
-    Future<RecordMetadata> send(K key, V payload);
-    Future<RecordMetadata> send(K key, V payload, Callback callback);
+    Future<RecordMetadata> send(String topic, V payload);
+    Future<RecordMetadata> send(String topic, V payload, Callback callback);
+    Future<RecordMetadata> send(String topic, K key, V payload);
+    Future<RecordMetadata> send(String topic, K key, V payload, Callback callback);
     void closeProducer();
 }

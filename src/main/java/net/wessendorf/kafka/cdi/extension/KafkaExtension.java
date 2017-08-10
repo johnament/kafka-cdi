@@ -141,7 +141,6 @@ public class KafkaExtension<X> implements Extension {
                     final Producer annotation = field.getAnnotation(Producer.class);
 
                     if (annotation != null) {
-                        final String defaultTopic = annotation.topic();
 
                         if (field.getType().isAssignableFrom(SimpleKafkaProducer.class)) {
                             field.setAccessible(Boolean.TRUE);
@@ -151,7 +150,6 @@ public class KafkaExtension<X> implements Extension {
 
                             final org.apache.kafka.clients.producer.Producer p = createInjectionProducer(
                                     bootstrapServers,
-                                    defaultTopic,
                                     keySerde.serializer().getClass(),
                                     valSerde.serializer().getClass(),
                                     keySerde.serializer(),
@@ -216,14 +214,14 @@ public class KafkaExtension<X> implements Extension {
         executorService.submit(delegationKafkaConsumer);
     }
 
-    private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final String topic, final Class<?> keySerializerClass, final Class<?> valSerializerClass, final Serializer<?> keySerializer, final Serializer<?> valSerializer ) {
+    private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final Class<?> keySerializerClass, final Class<?> valSerializerClass, final Serializer<?> keySerializer, final Serializer<?> valSerializer ) {
 
         final Properties properties = new Properties();
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(KEY_SERIALIZER_CLASS_CONFIG, keySerializerClass);
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, valSerializerClass);
 
-        return new InjectedKafkaProducer(properties, topic, keySerializer, valSerializer);
+        return new InjectedKafkaProducer(properties, keySerializer, valSerializer);
     }
 
 
