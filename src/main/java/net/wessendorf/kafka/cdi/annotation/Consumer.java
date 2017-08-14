@@ -21,6 +21,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.List;
 
 /**
  * Simple annotation for POJO beans, to advertise their one argument methods as a consumer for a given Kafka topic.
@@ -30,7 +31,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Consumer {
-    String topic();
+    String[] topics();
     String groupId();
     Class<?> keyType() default String.class;
 }

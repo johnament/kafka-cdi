@@ -31,6 +31,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,7 +53,7 @@ public class DelegationKafkaConsumer implements Runnable {
     private Object consumerInstance;
     final Properties properties = new Properties();
     private KafkaConsumer<?, ?> consumer;
-    private String topic;
+    private List<String> topics;
     private AnnotatedMethod annotatedListenerMethod;
 
     public DelegationKafkaConsumer() {
@@ -84,7 +85,7 @@ public class DelegationKafkaConsumer implements Runnable {
 
     public void initialize(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
         final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
-        this.topic = consumerAnnotation.topic();
+        this.topics = Arrays.asList(consumerAnnotation.topics());
         final String groupId = consumerAnnotation.groupId();
         final Class<?> recordKeyType = consumerAnnotation.keyType();
 
@@ -111,8 +112,8 @@ public class DelegationKafkaConsumer implements Runnable {
     @Override
     public void run() {
         try {
-            consumer.subscribe(Arrays.asList(topic));
-            logger.trace("subscribed to {}", topic);
+            consumer.subscribe(topics);
+            logger.trace("subscribed to {}", topics);
             while (isRunning()) {
                 final ConsumerRecords<?, ?> records = consumer.poll(100);
                 for (final ConsumerRecord<?, ?> record : records) {
