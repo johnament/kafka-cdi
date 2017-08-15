@@ -18,8 +18,10 @@ package net.wessendorf.kafka.cdi.extension;
 import net.wessendorf.kafka.SimpleKafkaProducer;
 import net.wessendorf.kafka.cdi.annotation.KafkaConfig;
 import net.wessendorf.kafka.cdi.annotation.Consumer;
+import net.wessendorf.kafka.cdi.annotation.KafkaStream;
 import net.wessendorf.kafka.cdi.annotation.Producer;
 import net.wessendorf.kafka.impl.DelegationKafkaConsumer;
+import net.wessendorf.kafka.impl.DelegationStreamProcessor;
 import net.wessendorf.kafka.impl.InjectedKafkaProducer;
 import net.wessendorf.kafka.serialization.CafdiSerdes;
 import org.apache.kafka.common.serialization.Serde;
@@ -63,6 +65,7 @@ public class KafkaExtension<X> implements Extension {
 
     private String bootstrapServers = null;
     private final Set<AnnotatedMethod<?>> listenerMethods = newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<AnnotatedMethod<?>> streamProcessorMethods = newSetFromMap(new ConcurrentHashMap<>());
     private final Set<DelegationKafkaConsumer> managedConsumers = newSetFromMap(new ConcurrentHashMap<>());
     private final Set<org.apache.kafka.clients.producer.Producer> managedProducers = newSetFromMap(new ConcurrentHashMap<>());
     private final Logger logger = LoggerFactory.getLogger(KafkaExtension.class);
@@ -81,7 +84,7 @@ public class KafkaExtension<X> implements Extension {
         }
     }
 
-    public void registerListeners(@Observes @WithAnnotations(Consumer.class) ProcessAnnotatedType pat) {
+    public void registerListeners(@Observes @WithAnnotations({Consumer.class, KafkaStream.class}) ProcessAnnotatedType pat) {
 
         logger.trace("scanning type: " + pat.getAnnotatedType().getJavaClass().getName());
         final AnnotatedType<X> annotatedType = pat.getAnnotatedType();
@@ -94,7 +97,13 @@ public class KafkaExtension<X> implements Extension {
                 logger.debug("found annotated listener method, adding for further processing");
 
                 listenerMethods.add(am);
+            } else if (am.isAnnotationPresent(KafkaStream.class)) {
+
+                logger.debug("found annotated stream method, adding for further processing");
+
+                streamProcessorMethods.add(am);
             }
+
         }
     }
 
@@ -102,19 +111,36 @@ public class KafkaExtension<X> implements Extension {
 
 //        final BeanManager bm = CDI.current().getBeanManager();
 
-        logger.debug("wiring annotated listener method to internal Kafka Consumer");
-        listenerMethods.forEach( am -> {
+        logger.debug("wiring annotated methods to internal Kafka Util clazzes");
+
+        listenerMethods.forEach( consumerMethod -> {
 
             final Bean<DelegationKafkaConsumer> bean = (Bean<DelegationKafkaConsumer>) bm.getBeans(DelegationKafkaConsumer.class).iterator().next();
             final CreationalContext<DelegationKafkaConsumer> ctx = bm.createCreationalContext(bean);
             final DelegationKafkaConsumer frameworkConsumer = (DelegationKafkaConsumer) bm.getReference(bean, DelegationKafkaConsumer.class, ctx);
 
             // hooking it all together
-            frameworkConsumer.initialize(bootstrapServers, am, bm);
+            frameworkConsumer.initialize(bootstrapServers, consumerMethod, bm);
 
             managedConsumers.add(frameworkConsumer);
             submitToExecutor(frameworkConsumer);
         });
+
+
+        streamProcessorMethods.forEach(annotatedStreamMethod -> {
+            final Bean<DelegationStreamProcessor> bean = (Bean<DelegationStreamProcessor>) bm.getBeans(DelegationStreamProcessor.class).iterator().next();
+            final CreationalContext<DelegationStreamProcessor> ctx = bm.createCreationalContext(bean);
+            final DelegationStreamProcessor frameworkProcessor = (DelegationStreamProcessor) bm.getReference(bean, DelegationStreamProcessor.class, ctx);
+
+            frameworkProcessor.init(bootstrapServers, annotatedStreamMethod, bm);
+        });
+
+
+
+
+
+
+
     }
 
     public void beforeShutdown(@Observes final BeforeShutdown bs) {

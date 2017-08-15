@@ -17,6 +17,7 @@ package net.wessendorf.kafka.cdi;
 
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
+import net.wessendorf.StreamProcessor;
 import net.wessendorf.beans.KafkaService;
 import net.wessendorf.kafka.cdi.annotation.Consumer;
 import net.wessendorf.kafka.cdi.extension.KafkaExtension;
@@ -42,8 +43,11 @@ import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.Extension;
 import javax.inject.Inject;
@@ -51,9 +55,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.UUID;
 
 @RunWith(Arquillian.class)
 public class SimpleTest {
+
+    private Logger logger = LoggerFactory.getLogger(SimpleTest.class);
 
     @Inject
     private KafkaService service;
@@ -72,6 +79,7 @@ public class SimpleTest {
                 .addPackage(DelegationKafkaConsumer.class.getPackage())
                 .addPackage(CafdiSerdes.class.getPackage())
                 .addClasses(KafkaExtension.class, SimpleKafkaProducer.class)
+                //.addClasses(StreamProcessor.class)
                 .addClasses(KafkaService.class)
                 .addAsServiceProvider(Extension.class, KafkaExtension.class)
                 .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
@@ -154,6 +162,32 @@ public class SimpleTest {
 
             assertThat(record.value()).isEqualTo("Hello");
         }
+    }
+
+    @Test
+    public void sendToStream() throws IOException {
+
+        final Properties pconfig = kafkaCluster.useTo().getProducerProperties("the_producer");
+        pconfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        pconfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        producer = new KafkaProducer<>(pconfig);
+
+
+        producer.send(new ProducerRecord("input_topic2", UUID.randomUUID().toString(), "Success"));
+
+//        Properties cconfig = kafkaCluster.useTo().getConsumerProperties("the_consumer2", "the_consumer2", OffsetResetStrategy.EARLIEST);
+//        cconfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+//        cconfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+//
+//        consumer = new KafkaConsumer(cconfig);
+//
+//        consumer.subscribe(Arrays.asList("output_topic"));
+//
+//        final ConsumerRecords<?, ?> records = consumer.poll(1000);
+//        for (ConsumerRecord<?, ?> record : records) {
+//            assertThat(record.value()).isNotNull();
+//        }
     }
 
     protected void close() {
