@@ -21,7 +21,7 @@ import net.wessendorf.kafka.serialization.GenericSerializer;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +37,6 @@ public class GenericSerializerTest {
     @Before
     public void setup() {
         serializer = new GenericSerializer<>();
-        serializer.configure(Collections.<String, Object>emptyMap(), false);
     }
 
     @Test
@@ -46,7 +45,7 @@ public class GenericSerializerTest {
     }
 
     @Test
-    public void serialize() throws Exception {
+    public void serialize() throws IOException {
         Map<String, Object> message = new HashMap<>();
         message.put("foo", "bar");
         message.put("baz", 354.99);
@@ -57,6 +56,13 @@ public class GenericSerializerTest {
         assertEquals(message, deserialized);
     }
 
+    @Test
+    public void serializeUser() throws IOException {
+        User user = new User("foo", 21);
+        byte[] bytes = serializer.serialize("test-topic", user);
+
+        assertEquals(user, this.objectMapper.readValue(bytes, User.class));
+    }
 
     public static class User {
         private String username;

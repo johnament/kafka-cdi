@@ -15,8 +15,6 @@
  */
 package net.wessendorf.serialization;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
 import net.wessendorf.kafka.serialization.JsonObjectDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -34,16 +32,13 @@ import static org.junit.Assert.assertNull;
 
 public class JsonObjectDeserializerTest {
 
-    ObjectMapper mapper = new ObjectMapper();
     private Deserializer<JsonObject> deserializer;
     private User javaOctocat;
-    private JsonNode jsonOctocat;
 
     @Before
     public void setUp() {
         deserializer = new JsonObjectDeserializer();
         javaOctocat = new User("octocat", 209);
-        jsonOctocat = mapper.valueToTree(javaOctocat);
     }
 
     @Test

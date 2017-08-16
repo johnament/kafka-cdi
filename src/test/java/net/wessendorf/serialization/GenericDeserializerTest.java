@@ -18,6 +18,7 @@ package net.wessendorf.serialization;
 import com.google.common.base.Objects;
 import net.wessendorf.kafka.serialization.GenericDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -29,44 +30,37 @@ import static org.junit.Assert.assertNull;
 
 public class GenericDeserializerTest {
 
+    private  Deserializer<Object> objectDeserializer;
+    private Deserializer<User> userDeserializer;
+
+    @Before
+    public void setup() {
+        objectDeserializer = new GenericDeserializer<>(Object.class);
+        userDeserializer = new GenericDeserializer<>(User.class);
+    }
+
+
     @Test
     public void deserializeNull() {
-        Deserializer<Object> deserializer = new GenericDeserializer<>(Object.class);
-
-        Map<String, Object> props = new HashMap<>();
-        deserializer.configure(props, true);
-
-        assertNull(deserializer.deserialize("test-topic", null));
+        assertNull(objectDeserializer.deserialize("test-topic", null));
     }
 
     @Test(expected = org.apache.kafka.common.errors.SerializationException.class)
     public void deserializeEmpty() {
-        Deserializer<Object> deserializer = new GenericDeserializer<>(Object.class);
-
-        Map<String, Object> props = new HashMap<>();
-        deserializer.configure(props, true);
-
-        assertNull(deserializer.deserialize("test-topic", new byte[0]));
+        assertNull(objectDeserializer.deserialize("test-topic", new byte[0]));
     }
 
     @Test(expected = org.apache.kafka.common.errors.SerializationException.class)
     public void deserializeWrongObject() {
-        Deserializer<User> deserializer = new GenericDeserializer<>(User.class);
-
-        Map<String, Object> props = new HashMap<>();
-        deserializer.configure(props, true);
-
-        assertNull(deserializer.deserialize("test-topic", "{\"foo\":\"bar\"}".getBytes()));
+        assertNull(userDeserializer.deserialize("test-topic", "{\"foo\":\"bar\"}".getBytes()));
     }
 
     @Test
     public void deserializeKey() {
-        Deserializer<User> deserializer = new GenericDeserializer<>(User.class);
-
         Map<String, Object> props = new HashMap<>();
-        deserializer.configure(props, true);
+        userDeserializer.configure(props, true);
 
-        User octo = deserializer.deserialize("test-topic", "{\"username\":\"octo\", \"age\":\"21\"}".getBytes());
+        User octo = userDeserializer.deserialize("test-topic", "{\"username\":\"octo\", \"age\":\"21\"}".getBytes());
 
         assertNotNull(octo);
         assertEquals("octo", octo.getUsername());
@@ -75,12 +69,10 @@ public class GenericDeserializerTest {
 
     @Test
     public void deserializeValue() {
-        Deserializer<User> deserializer = new GenericDeserializer<>(User.class);
-
         HashMap<String, Object> props = new HashMap<>();
-        deserializer.configure(props, false);
+        userDeserializer.configure(props, false);
 
-        User octo = deserializer.deserialize("test-topic", "{\"username\":\"octo\", \"age\":\"21\"}".getBytes());
+        User octo = userDeserializer.deserialize("test-topic", "{\"username\":\"octo\", \"age\":\"21\"}".getBytes());
 
         assertNotNull(octo);
         assertEquals("octo", octo.getUsername());
