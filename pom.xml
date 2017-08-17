@@ -50,9 +50,15 @@
       <id>matzew</id>
       <name>Matthias Wessendorf</name>
     </developer>
+
     <developer>
       <id>polinankoleva</id>
       <name>Polina Koleva</name>
+    </developer>
+
+    <developer>
+      <id>dimitraz</id>
+      <name>Dimitra Zuccarelli</name>
     </developer>
   </developers>
 
