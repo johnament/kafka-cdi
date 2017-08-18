@@ -16,11 +16,16 @@
 package net.wessendorf.kafka.impl;
 
 import net.wessendorf.kafka.cdi.annotation.KafkaStream;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.KTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +34,7 @@ import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -39,7 +45,6 @@ public class DelegationStreamProcessor {
     private final Logger logger = LoggerFactory.getLogger(DelegationStreamProcessor.class);
     final Properties properties = new Properties();
     private AnnotatedMethod annotatedProcessorMethod;
-    private final KStreamBuilder builder = new KStreamBuilder();
     private KafkaStreams streams;
 
     public void init(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
@@ -52,12 +57,12 @@ public class DelegationStreamProcessor {
         properties.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         properties.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         properties.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 3000L);
+        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         final StreamsConfig cfg = new StreamsConfig(properties);
-
+        final KStreamBuilder builder = new KStreamBuilder();
 
         final KStream<String, String> source = builder.stream(streamAnnotation.input());
-        KStream<String, Long> sink = null;
 
         // wire method and execute it:
         final Set<Bean<?>> beans = beanManager.getBeans(annotatedProcessorMethod.getJavaMember().getDeclaringClass());
@@ -68,20 +73,32 @@ public class DelegationStreamProcessor {
                 annotatedProcessorMethod.getJavaMember().getDeclaringClass(), creationalContext);
 
         try {
-            sink = (KStream) annotatedProcessorMethod.getJavaMember().invoke(processorInstance, source);
+            final Object sink = annotatedProcessorMethod.getJavaMember().invoke(processorInstance, source);
+
+            if (sink instanceof KStream) {
+
+                final KStream streamSink = (KStream) sink;
+                streamSink.through(Serdes.String(), Serdes.Long(), streamAnnotation.output());
+
+            } else if (sink instanceof KTable) {
+
+                final KTable tableSink = (KTable) sink;
+                tableSink.to(Serdes.String(), Serdes.Long(), streamAnnotation.output());
+            }
+
         } catch (IllegalAccessException | InvocationTargetException e) {
             logger.error("error dispatching received value to consumer", e);
         }
 
-        sink.through(Serdes.String(), Serdes.Long(), streamAnnotation.output());
-
         // go!
         try {
             streams = new KafkaStreams(builder, cfg);
+
             streams.setStateListener((newState, oldState) -> {
                 logger.trace("OLD STATE {}", oldState);
                 logger.trace("NEW STATE {}", newState);
             });
+            logger.trace("Starting the Streaming context");
             streams.start();
         } catch (Exception e) {
             logger.error("Could not start Kafka streaming client", e);
