@@ -25,7 +25,7 @@
 
   <groupId>net.wessendorf.kafka</groupId>
   <artifactId>kafka-cdi-extension</artifactId>
-  <version>0.0.9-SNAPSHOT</version>
+  <version>0.0.9</version>
   <packaging>jar</packaging>
   <name>kafka-cdi</name>
   <description>simple CDI extension for Apache Kafka</description>
