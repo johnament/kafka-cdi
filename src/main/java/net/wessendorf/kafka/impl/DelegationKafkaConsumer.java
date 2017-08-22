@@ -15,8 +15,10 @@
  */
 package net.wessendorf.kafka.impl;
 
+import net.wessendorf.kafka.DefaultConsumerRebalanceListener;
 import net.wessendorf.kafka.cdi.annotation.Consumer;
 import net.wessendorf.kafka.serialization.CafdiSerdes;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -55,10 +57,25 @@ public class DelegationKafkaConsumer implements Runnable {
     private KafkaConsumer<?, ?> consumer;
     private List<String> topics;
     private AnnotatedMethod annotatedListenerMethod;
+    private ConsumerRebalanceListener consumerRebalanceListener;
 
     public DelegationKafkaConsumer() {
     }
 
+
+    private ConsumerRebalanceListener createConsumerRebalanceListener(final Class<? extends ConsumerRebalanceListener> consumerRebalanceListenerClazz) {
+
+        if (consumerRebalanceListenerClazz.equals(DefaultConsumerRebalanceListener.class)) {
+            return new DefaultConsumerRebalanceListener(consumer);
+        } else {
+            try {
+                return consumerRebalanceListenerClazz.getDeclaredConstructor(org.apache.kafka.clients.consumer.Consumer.class).newInstance(consumer);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                logger.error("Could not create desired listener, using DefaultConsumerRebalanceListener", e);
+                return new DefaultConsumerRebalanceListener(consumer);
+            }
+        }
+    }
 
     private Class<?> consumerKeyType(final Class<?> defaultKeyType, final AnnotatedMethod annotatedMethod) {
 
@@ -100,6 +117,7 @@ public class DelegationKafkaConsumer implements Runnable {
         properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valTypeClass).deserializer().getClass());
 
         createKafkaConsumer(keyTypeClass, valTypeClass, properties);
+        this.consumerRebalanceListener = createConsumerRebalanceListener(consumerAnnotation.consumerRebalanceListener());
 
         final Set<Bean<?>> beans = beanManager.getBeans(annotatedListenerMethod.getJavaMember().getDeclaringClass());
         final Bean<?> propertyResolverBean = beanManager.resolve(beans);
@@ -112,7 +130,7 @@ public class DelegationKafkaConsumer implements Runnable {
     @Override
     public void run() {
         try {
-            consumer.subscribe(topics);
+            consumer.subscribe(topics, consumerRebalanceListener);
             logger.trace("subscribed to {}", topics);
             while (isRunning()) {
                 final ConsumerRecords<?, ?> records = consumer.poll(100);
