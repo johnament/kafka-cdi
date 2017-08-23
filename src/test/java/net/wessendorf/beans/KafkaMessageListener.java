@@ -15,28 +15,29 @@
  */
 package net.wessendorf.beans;
 
-import net.wessendorf.kafka.SimpleKafkaProducer;
-import net.wessendorf.kafka.cdi.ServiceInjectionTest;
-import net.wessendorf.kafka.cdi.annotation.KafkaConfig;
-import net.wessendorf.kafka.cdi.annotation.Producer;
+import net.wessendorf.beans.mock.MessageReceiver;
+import net.wessendorf.kafka.cdi.annotation.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@KafkaConfig(bootstrapServers = "#{KAFKA_SERVICE_HOST}")
-public class KafkaService {
+import javax.inject.Inject;
 
-    Logger logger = LoggerFactory.getLogger(KafkaService.class);
+import static net.wessendorf.kafka.cdi.ServiceInjectionTest.TOPIC_NAME;
 
-    @Producer
-    private SimpleKafkaProducer<Integer, String> producer;
+public class KafkaMessageListener {
 
-    public SimpleKafkaProducer returnProducer() {
-        return producer;
+    @Inject
+    private MessageReceiver receiver;
+
+    private final Logger logger = LoggerFactory.getLogger(KafkaMessageListener.class);
+
+    @Consumer(
+            topics = TOPIC_NAME,
+            groupId = TOPIC_NAME+"_annotation",
+            consumerRebalanceListener = MyConsumerRebalanceListener.class
+    )
+    public void onMessage(final String simplePayload) {
+        logger.trace("Got {} ", simplePayload);
+        receiver.ack();
     }
-
-    public void sendMessage() {
-        logger.info("sending message to the topic....");
-        producer.send(ServiceInjectionTest.TOPIC_NAME, "This is only a test");
-    }
-
 }
