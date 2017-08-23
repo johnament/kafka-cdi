@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (C) 2017 Matthias Wessendorf
+  Copyright 2017 Red Hat, Inc, and individual contributors.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>9</version>
+    <groupId>org.jboss</groupId>
+    <artifactId>jboss-parent</artifactId>
+    <version>21</version>
   </parent>
 
-  <groupId>net.wessendorf.kafka</groupId>
+  <groupId>org.aerogear.kafka</groupId>
   <artifactId>kafka-cdi-extension</artifactId>
   <version>0.0.10-SNAPSHOT</version>
   <packaging>jar</packaging>
@@ -31,9 +31,9 @@
   <description>simple CDI extension for Apache Kafka</description>
 
   <scm>
-    <connection>scm:git:git://github.com/matzew/kafka-cdi.git</connection>
-    <developerConnection>scm:git:git@github.com:matzew/kafka-cdi.git</developerConnection>
-    <url>https://github.com/matzew/kafka-cdi</url>
+    <connection>scm:git:git://github.com/aerogear/kafka-cdi.git</connection>
+    <developerConnection>scm:git:git@github.com:aerogear/kafka-cdi.git</developerConnection>
+    <url>https://github.com/aerogear/kafka-cdi</url>
     <tag>HEAD</tag>
   </scm>
 
