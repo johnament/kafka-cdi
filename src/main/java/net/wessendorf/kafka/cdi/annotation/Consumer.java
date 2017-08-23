@@ -15,6 +15,9 @@
  */
 package net.wessendorf.kafka.cdi.annotation;
 
+import net.wessendorf.kafka.DefaultConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -34,4 +37,5 @@ public @interface Consumer {
     String[] topics();
     String groupId();
     Class<?> keyType() default String.class;
+    Class<? extends ConsumerRebalanceListener> consumerRebalanceListener() default DefaultConsumerRebalanceListener.class;
 }
